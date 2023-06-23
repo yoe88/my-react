@@ -79,7 +79,7 @@ function useNumberState<T>(props: Props<T>) {
     }
   }
 
-  function validatedNumber(n: number) {
+  function validatedArrange(n: number) {
     if (max && n > max) {
       return false;
     }
@@ -145,21 +145,30 @@ function useNumberState<T>(props: Props<T>) {
       return setBoth("");
     }
 
+    //문자열 체크
     if (validatedText(v)) {
       setText(v);
 
       const n = parseNumber(v);
-      if (validatedNumber(n)) {
+      //범위 체크
+      if (validatedArrange(n)) {
         setState(v);
+      } else {
+        if (min && n < min) {
+          setState(min + "");
+        } else if (max && n > max) {
+          setState(max + "");
+        }
       }
     }
   }
 
   function commit() {
     const n = parseNumber(text);
-    if (isNaN(n) && isNaN(number)) return;
+    //공백인경우
+    if (isNaN(n)) return;
 
-    //내부 숫자랑 input값이 다른경우
+    //내부 숫자랑 input값이 다른경우(주로 범위가 다른경우)
     if (n !== number) {
       setText(number + "");
     } else if (!isString) {
