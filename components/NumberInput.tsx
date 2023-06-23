@@ -14,7 +14,9 @@ interface Restrict {
   maxLength?: number;
 }
 
-interface Props<T = number | string> extends Restrict, Field {
+interface CustomProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type" | "min" | "max" | "maxLength" | "step" | "value" | "onChange"> {}
+
+interface Props<T = number | string> extends CustomProps, Restrict, Field {
   value: T;
   onChange(v: T): void;
 }
@@ -193,31 +195,33 @@ function NumberField<T = number | string>(props: Props<T>, ref: React.ForwardedR
   const { inputValue, setInputValue, commit, validatedText, increment, decrement, incrementToMax, decrementToMin } = useNumberState(props);
 
   function onKeyDown(e: React.KeyboardEvent) {
-    if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || disabled || readOnly) {
-      return;
+    if (!(e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || disabled || readOnly)) {
+      switch (e.key) {
+        case "PageUp":
+        case "ArrowUp":
+        case "Up":
+          e.preventDefault();
+          increment();
+          break;
+        case "PageDown":
+        case "ArrowDown":
+        case "Down":
+          e.preventDefault();
+          decrement();
+          break;
+        case "Home":
+          e.preventDefault();
+          decrementToMin();
+          break;
+        case "End":
+          e.preventDefault();
+          incrementToMax();
+          break;
+      }
     }
 
-    switch (e.key) {
-      case "PageUp":
-      case "ArrowUp":
-      case "Up":
-        e.preventDefault();
-        increment();
-        break;
-      case "PageDown":
-      case "ArrowDown":
-      case "Down":
-        e.preventDefault();
-        decrement();
-        break;
-      case "Home":
-        e.preventDefault();
-        decrementToMin();
-        break;
-      case "End":
-        e.preventDefault();
-        incrementToMax();
-        break;
+    if (props.onKeyDown) {
+      props.onKeyDown(e);
     }
   }
 
@@ -228,14 +232,17 @@ function NumberField<T = number | string>(props: Props<T>, ref: React.ForwardedR
     if (!validatedText(nextValue)) {
       e.preventDefault();
     }
+
+    if (props.onBeforeInput) props.onBeforeInput(e);
   }
 
   function onChange(e: React.ChangeEvent<HTMLInputElement>) {
     setInputValue(e.target.value);
   }
 
-  function onBlur() {
+  function onBlur(e: React.FocusEvent<HTMLInputElement>) {
     commit();
+    if (props.onBlur) props.onBlur(e);
   }
 
   function logging(text: string) {
